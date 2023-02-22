@@ -1,11 +1,23 @@
+import Button from '@mui/material/Button';
 import { ConnectButton, useWalletKit } from "@mysten/wallet-kit";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+import { useState } from "react";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export function Main() {
 
   const { currentAccount, signAndExecuteTransaction } = useWalletKit();
+  const [open, setOpen] = useState(false);
 
-  const handleClick = async () => {
-    await signAndExecuteTransaction({
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const mint = () => {
+    setOpen(!open);
+    signAndExecuteTransaction({
       kind: "moveCall",
       data: {
         packageObjectId: "0x2",
@@ -13,13 +25,25 @@ export function Main() {
         function: "mint",
         typeArguments: [],
         arguments: [
-          "sui",
-          "devnet live",
-          "https://miro.medium.com/v2/resize:fit:750/format:webp/1*IRwa2GrRrF3HaCsR-h3yIQ.png",
+          "name",
+          "description",
+          "https://example.com/"
         ],
         gasBudget: 3000,
       },
-    });
+    })
+    .then(
+      (res) => {
+        setOpen(false);
+        toast("Mint sucessful");
+      }
+    )
+    .catch(
+      (err) => {
+        setOpen(false);
+        toast(err.message);
+      }
+    );
   };
 
   return(
@@ -32,7 +56,17 @@ export function Main() {
             <div className="main-container">
               <h1>Try Mint a NFT</h1>
               <h2>Click in the button bellow</h2>
-              <button onClick={handleClick}>Mint</button>
+              <Button variant="contained" onClick={mint}>Mint</Button>
+              <Backdrop
+                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+                open={open}
+                onClick={handleClose}
+              >
+                <div className="modal-transaction">
+                  <h1>Minting in progress...</h1>
+                  <CircularProgress color="inherit" />
+                </div>
+              </Backdrop>
             </div>
           </div>
         </>
@@ -47,6 +81,7 @@ export function Main() {
           </div>
         </>
       }
+      <ToastContainer />
     </>
   );
 }
